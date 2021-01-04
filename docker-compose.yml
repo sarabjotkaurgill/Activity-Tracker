@@ -1,0 +1,49 @@
+
+version: '3'
+
+services:
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: activitytrackerdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: secret
+    ports:
+      - "11000:3800"
+  web:
+    build: .
+    image: mywebsite
+    depends_on:
+      - db
+    volumes:
+      - "./www/:/var/www/html/:Z"
+    environment:
+      CONFIG_MYSQL_DATABASE: activitytrackerdb
+      CONFIG_MYSQL_USER: root
+      CONFIG_MYSQL_PASSWORD: secret
+      CONFIG_MYSQL_HOST: db
+      CONFIG_MYSQL_PORT: 3306
+      CONFIG_BACKEND_HOST: 'localhost'
+    ports:
+      - "11001:80"
+    stdin_open: true
+    tty: true
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - db
+    ports:
+      - "3029:80"
+    
+  flyway:
+    image: flyway/flyway
+    command: -url=jdbc:mysql://db:3306/mydatabase?verifyServerCertificate=false&useSSL=false -user=root -password=secret -connectRetries=60 migrate
+    volumes:
+      - ./flyway/sql:/flyway/sql
+    depends_on:
+      - db
+
+# from PHP, connect to MySQL via the "db" hostname on port 3306
+
